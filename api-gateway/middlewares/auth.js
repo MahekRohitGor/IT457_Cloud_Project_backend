@@ -5,7 +5,9 @@ function verifyJWT(req, res, next) {
         "/login",
         "/signup",
         "/verify-otp",
-        "/forgot-pass"
+        "/forgot-pass",
+        "/verify-reset-otp",
+        "/reset-password"
     ];
 
     if (openPaths.includes(req.path.toLowerCase())) {

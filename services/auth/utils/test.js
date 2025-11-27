@@ -40,19 +40,24 @@ const sample = {
 };
 
 const otp = {
-  email_id: "heli@example.com",
-  otp: "9959"
+  email: "zxcv@example.com",
+  otp: "1872"
+};
+
+const reset = {
+  reset_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Inp4Y3ZAZXhhbXBsZS5jb20iLCJ0eXBlIjoicGFzc3dvcmRfcmVzZXQiLCJpYXQiOjE3NjQyNTA4MDUsImV4cCI6MTc2NDI1MTQwNX0.-p45Qx03jgqmWSbz_m9-3Kb3xjyWy4PG_4xnvtk5bIU",
+  new_password: "helloworld"
 };
 
 const login = {
   email: "zxcv@example.com"
 };
 
-const encrypted = encryptData(login);
+const encrypted = encryptData(reset);
 console.log("\n🔒 ENCRYPTED PAYLOAD (copy this to Postman):");
 console.log(encrypted);
 
-const decrypted = decryptData("gJH2x1Dnbm+aLSOJIa5iHLYwCa1GH9OyocqjX0G+Bum69cmgH/eQHZZKro2uwT/jydUr4NpIEj4mtGelkdwXeHlqulbGAefSrMP1myqvWxc=");
+const decrypted = decryptData("oLJq32RyyKRrhcd+JXkSkX5QPIb+11zd7Z3VJzMuJ3zeRsQh4ayPx7XnOyjWHX9g");
 console.log("\n🔓 DECRYPTED:");
 console.log(decrypted);
 

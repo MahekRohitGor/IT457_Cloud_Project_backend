@@ -43,5 +43,11 @@ router.post(
     encryptedMiddleware(authController.verifyResetOtp)
 );
 
+router.post(
+    "/reset-password",
+    decryptMiddleware,
+    encryptedMiddleware(authController.resetPassword)
+);
+
 
 module.exports = router;

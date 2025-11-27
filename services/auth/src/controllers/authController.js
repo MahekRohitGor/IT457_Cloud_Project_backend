@@ -253,7 +253,7 @@ async function forgotPassword(req, res, decryptedBody){
                     }
                 } else{
                     const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
-                    const expiry = new Date(Date.now() + 5 * 60 * 1000);
+                    const expiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
                     user.otp = otpCode;
                     user.otp_expiry = expiry;
@@ -308,7 +308,13 @@ async function verifyResetOtp(req, res, decryptedBody){
                         message: "Invalid OTP",
                         data: null
                     }
-                } else if(user.otp_expiry < new Date()){
+                } else if(Date.now() > new Date(user.otp_expiry).getTime()){
+                    console.log("=== OTP DEBUG ===");
+                    console.log("OTP:", user.otp, "vs", otp);
+                    console.log("Stored Expiry:", user.otp_expiry);
+                    console.log("Current Time:", new Date());
+                    console.log("Expired?", new Date() > new Date(user.otp_expiry).getTime());
+
                     return{
                         code: 401,
                         message: "OTP has expired",
@@ -318,10 +324,20 @@ async function verifyResetOtp(req, res, decryptedBody){
                     user.otp = null;
                     user.otp_expiry = null;
                     await user.save();
+
+                    const payload = {
+                        email: user.email_id,
+                        type: "password_reset"
+                    };
+
+                    const resetToken = jwt.sign(payload, process.env.JWT_SECRET, {
+                        expiresIn: "10m"
+                    });
+
                     return {
                         code: 200,
                         message: "OTP verified successfully",
-                        data: { user_id: user.user_id }
+                        data: { reset_token: resetToken }
                     }
                 }
             }
@@ -336,11 +352,71 @@ async function verifyResetOtp(req, res, decryptedBody){
     }
 }
 
+async function resetPassword(req, res, decryptedBody) {
+    try{
+        const {reset_token, new_password} = decryptedBody;
+        if (!reset_token || !new_password) {
+            return { 
+                code: 400, 
+                message: "Reset token and password required", 
+                data: null 
+            };
+        } else{
+            let decoded;
+            try{
+                decoded = jwt.verify(reset_token, process.env.JWT_SECRET);
+            } catch(error){
+                return {
+                    code: 401,
+                    message: "Invalid or expired token",
+                    data: null
+                }
+            }
+
+            if (decoded.type !== "password_reset") {
+                return { 
+                    code: 401, 
+                    message: "Invalid token type", 
+                    data: null 
+                };
+            } else{
+                const user = await User.findOne({ where: { email_id: decoded.email } });
+                if (!user) {
+                    return { 
+                        code: 404, 
+                        message: "User not found", 
+                        data: null 
+                    };
+                } else{
+                    user.password = new_password;
+                    user.otp = null;
+                    user.otp_expiry = null;
+                    await user.save();
+                    return {
+                        code: 200,
+                        message: "Password reset successful, please log in again.",
+                        data: null
+                    };
+                }
+            }
+        }
+
+    } catch(error){
+        console.log(error);
+        return{
+            code: 500,
+            message: "Some error occured",
+            data: null
+        }
+    }
+}
+
 module.exports = {
     signup,
     login,
     verifyOtp,
     logout,
     forgotPassword,
-    verifyResetOtp
+    verifyResetOtp,
+    resetPassword
 }
