@@ -1,18 +1,32 @@
 const jwt = require("jsonwebtoken");
 
-function verifyJWT(req, res, next){
-    const auth = req.header('Authorization') || '';
-    const token = auth.startswith('Bearer ') ? auth.slice(7) : null;
-    if(!token) return res.status(401).json({ error: 'Authorization token is required' });
-    try{
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = payload;
-        next();
-    } catch(err){
-        console.log(err);
-        console.log(err.message);
-        return res.status(401).json({ error: 'Invalid or expired token' });
+function verifyJWT(req, res, next) {
+    const openPaths = [
+        "/login",
+        "/signup",
+        "/verify-otp",
+        "/forgot-pass"
+    ];
+
+    if (openPaths.includes(req.path.toLowerCase())) {
+        return next();
+    } else {
+        const authHeader = req.headers["authorization"];
+        if (!authHeader) {
+            return res.status(401).json({ message: "Missing token" });
+        } else {
+            const token = authHeader.split(" ")[1];
+            console.log(token);
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                console.log("Decoded JWT:", decoded);
+                req.headers["x-user-id"] = decoded.user_id;
+                next();
+            } catch (err) {
+                return res.status(401).json({ message: "Invalid token" });
+            }
+        }
     }
 }
 
-module.exports = {verifyJWT}
+module.exports = { verifyJWT }

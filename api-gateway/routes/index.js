@@ -1,7 +1,8 @@
 const express = require("express");
-const {verifyToken} = require("../middlewares/auth");
+const {verifyJWT} = require("../middlewares/auth");
 require("dotenv").config();
 const {proxy} = require("../../common/helper");
+const validateApiKey = require("../middlewares/apikey");
 
 const router = express.Router();
 console.log({
@@ -10,7 +11,8 @@ console.log({
   PAYMENT_SERVICE_URL: process.env.PAYMENT_SERVICE_URL,
 });
 
-router.use('/auth', proxy('/auth', process.env.AUTH_SERVICE_URL));
+router.use(validateApiKey);
+router.use('/auth', verifyJWT, proxy(process.env.AUTH_SERVICE_URL));
 // router.use('/users', verifyToken, proxy('/users', process.env.USER_SERVICE_URL));
 // router.use('/payments', verifyToken, proxy('/payments', process.env.PAYMENT_SERVICE_URL));
 

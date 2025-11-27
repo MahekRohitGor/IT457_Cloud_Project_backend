@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 // Middlewares
 app.use(helmet());
 app.use(cors());
-app.use(express.json());
+// app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Basic Rate Limiting on the Gateway
@@ -25,7 +25,7 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
-app.use('/api', routes);
+app.use('/', routes);
 app.use(errorHandler);
 
 // Start the Server
