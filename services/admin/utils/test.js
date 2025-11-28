@@ -32,24 +32,62 @@ function decryptData(encrypted) {
   return JSON.parse(decrypted);
 }
 
-const sample = {
-  name: "heli",
-  email: "heli@example.com",
-  password: "asdfghjkl",
-  phone_number: "1234567890"
-};
+const create = {
+  category_name: "Beverages"
+}
+
+const up1 = {
+  category_id: 3,
+  category_name: "Cold Beverages"
+}
+
+const up2 = {
+  category_id: 3,
+  is_active: false
+}
+
+const up3 = {
+  category_id: 3,
+  category_name: "Desserts & Ice Cream",
+  is_active: true
+}
+
+const del = {
+  "category_id": 5
+}
+
+const add = {
+  item_name: "Cheese Pizza",
+  description: "Loaded with cheese",
+  price: 199,
+  category_id: 1
+}
+
+const upp1 = {
+  item_id: 5,
+  item_name: "Spicy Cheese Pizza",
+  category_id: 1,
+  price: 229
+}
+
+const upp2 = {
+  item_id: 5,
+  is_available: false
+}
+
+const del1 = {
+  item_id: 5
+}
 
 const login = {
   email: "admin@cloudkitchen.com",
   password: "admin123"
 };
 
-const encrypted = encryptData(login);
+const encrypted = encryptData(del1);
 console.log("\n🔒 ENCRYPTED PAYLOAD (copy this to Postman):");
 console.log(encrypted);
 
-const decrypted = decryptData("oLJq32RyyKRrhcd+JXkSkX5QPIb+11zd7Z3VJzMuJ3zeRsQh4ayPx7XnOyjWHX9g");
+const decrypted = decryptData("gJH2x1Dnbm+aLSOJIa5iHEqeGKXLHHIk5CBvurDE+Bbzi/vo1uBpttCPchRFuE0UTgTeOPsoBGd8tvuZx2uyKA==");
 console.log("\n🔓 DECRYPTED:");
 console.log(decrypted);
-
-console.log("\n✅ Encryption/Decryption successful:", JSON.stringify(sample) === JSON.stringify(decrypted));

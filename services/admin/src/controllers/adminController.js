@@ -186,23 +186,20 @@ async function add_category(req, res, decryptedBody) {
     }
 }
 
-async function getCategories(req, res) {
+async function getCategories(req, res, decryptedBody) {
     try {
         const categories = await Category.findAll({
-            where: { is_deleted: false },
-            include: [
-                {
-                    model: Item,
-                    attributes: ["item_id", "item_name", "price", "is_available"],
-                }
-            ],
+            where: { is_deleted: false, is_active: true },
+            attributes: ["category_id", "category_name"],
             order: [["created_at", "DESC"]]
         });
+
+        const cleanData = categories.map(cat => cat.get({ plain: true }));
 
         return {
             code: 200,
             message: "Categories fetched successfully",
-            data: categories
+            data: cleanData
         };
 
     } catch (error) {
@@ -257,20 +254,20 @@ async function updateCategory(req, res, decryptedBody) {
         const { category_id, category_name, is_active } = decryptedBody;
 
         if (!category_id) {
-            return { 
-                code: 400, 
-                message: "Category ID is required", 
-                data: null 
+            return {
+                code: 400,
+                message: "Category ID is required",
+                data: null
             };
         }
 
         const category = await Category.findByPk(category_id);
 
         if (!category || category.is_deleted) {
-            return { 
-                code: 404, 
-                message: "Category not found", 
-                data: null 
+            return {
+                code: 404,
+                message: "Category not found",
+                data: null
             };
         }
 
@@ -304,11 +301,218 @@ async function updateCategory(req, res, decryptedBody) {
 
     } catch (error) {
         console.error("Update Category Error:", error);
-        return { 
-            code: 500, 
-            message: "Internal Server Error", 
-            data: null 
+        return {
+            code: 500,
+            message: "Internal Server Error",
+            data: null
         };
+    }
+}
+
+async function createItem(req, res, decryptedBody) {
+    try {
+        const { item_name, description, price, category_id } = decryptedBody;
+
+        if (!item_name || !price || !category_id) {
+            return {
+                code: 400,
+                message: "Item name, price, and category_id are required",
+                data: null
+            };
+        }
+
+        if (isNaN(price) || Number(price) <= 0) {
+            return {
+                code: 400,
+                message: "Price must be a valid positive number",
+                data: null
+            };
+        }
+
+        const category = await Category.findByPk(category_id);
+        if (!category || category.is_deleted) {
+            return {
+                code: 404,
+                message: "Category not found",
+                data: null
+            };
+        }
+
+        const existingItem = await Item.findOne({
+            where: {
+                item_name,
+                category_id,
+                is_deleted: false
+            }
+        });
+
+        if (existingItem) {
+            return {
+                code: 409,
+                message: "Item already exists in this category",
+                data: null
+            };
+        }
+
+        const newItem = await Item.create({
+            item_name,
+            description,
+            price,
+            category_id,
+            image_link: "https://picsum.photos/id/237/200/300",
+            is_available: true
+        });
+
+        return {
+            code: 201,
+            message: "Item created successfully",
+            data: newItem
+        };
+
+    } catch (error) {
+        console.error("Create Item Error:", error);
+        return { code: 500, message: "Internal Server Error", data: null };
+    }
+}
+
+async function listItems(req, res) {
+    try {
+        const items = await Item.findAll({
+            where: { is_deleted: false },
+            include: [{
+                model: Category,
+                attributes: ["category_id", "category_name"]
+            }],
+            order: [["created_at", "DESC"]]
+        });
+
+        const cleanData = JSON.parse(
+            JSON.stringify(
+                items.map(item => {
+                    const plain = item.get({ plain: true });
+                    return {
+                        item_id: plain.item_id,
+                        item_name: plain.item_name,
+                        description: plain.description,
+                        price: plain.price,
+                        category_id: plain.tbl_category ? plain.category_id : null,
+                        category_name: plain.tbl_category ? plain.tbl_category.category_name : null,
+                        image_link: plain.image_link,
+                        is_available: plain.is_available
+                    };
+                })
+            )
+        );
+
+        return {
+            code: 200,
+            message: "Items fetched successfully",
+            data: cleanData
+        };
+
+    } catch (error) {
+        console.error("Get Items Error:", error);
+        return { code: 500, message: "Internal Server Error", data: null };
+    }
+}
+
+async function updateItem(req, res, decryptedBody) {
+    try {
+        const { item_id, item_name, description, price, category_id, is_available } = decryptedBody;
+
+        if (!item_id) {
+            return {
+                code: 400,
+                message: "item_id is required",
+                data: null
+            };
+        }
+
+        const item = await Item.findByPk(item_id);
+
+        if (!item || item.is_deleted) {
+            return {
+                code: 404,
+                message: "Item not found",
+                data: null
+            };
+        }
+
+        if (category_id) {
+            const category = await Category.findByPk(category_id);
+            if (!category || category.is_deleted) {
+                return {
+                    code: 404,
+                    message: "Category not found",
+                    data: null
+                };
+            }
+        }
+
+        if (price !== undefined) {
+            if (isNaN(price) || Number(price) <= 0) {
+                return {
+                    code: 400,
+                    message: "Price must be a valid positive number",
+                    data: null
+                };
+            }
+        }
+
+        if (item_name) item.item_name = item_name;
+        if (description !== undefined) item.description = description;
+        if (price !== undefined) item.price = price;
+        if (category_id) item.category_id = category_id;
+        if (typeof is_available === "boolean") item.is_available = is_available;
+
+        await item.save();
+
+        return {
+            code: 200,
+            message: "Item updated successfully",
+            data: item
+        };
+
+    } catch (error) {
+        console.error("Update Item Error:", error);
+        return { code: 500, message: "Internal Server Error", data: null };
+    }
+}
+
+async function deleteItem(req, res, decryptedBody) {
+    try {
+        const { item_id } = decryptedBody;
+
+        if (!item_id) {
+            return {
+                code: 400,
+                message: "item_id is required",
+                data: null
+            };
+        }
+
+        const item = await Item.findByPk(item_id);
+
+        if (!item || item.is_deleted) {
+            return {
+                code: 404,
+                message: "Item not found",
+                data: null
+            };
+        }
+
+        item.is_deleted = true;
+        await item.save();
+
+        return {
+            code: 200,
+            message: "Item deleted successfully",
+            data: null
+        };
+
+    } catch (error) {
+        console.error("Delete Item Error:", error);
+        return { code: 500, message: "Internal Server Error", data: null };
     }
 }
 
@@ -318,5 +522,9 @@ module.exports = {
     add_category,
     getCategories,
     deleteCategory,
-    updateCategory
+    updateCategory,
+    createItem,
+    listItems,
+    updateItem,
+    deleteItem
 }
