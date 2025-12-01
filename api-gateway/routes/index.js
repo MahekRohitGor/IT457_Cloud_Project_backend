@@ -9,12 +9,12 @@ const router = express.Router();
 console.log({
   AUTH_SERVICE_URL: process.env.AUTH_SERVICE_URL,
   ADMIN_SERVICE_URL: process.env.ADMIN_SERVICE_URL,
-  PAYMENT_SERVICE_URL: process.env.PAYMENT_SERVICE_URL,
+  USER_SERVICE_URL: process.env.USER_SERVICE_URL,
 });
 
 router.use(validateApiKey);
 router.use('/auth', verifyJWT, proxy(process.env.AUTH_SERVICE_URL));
 router.use('/admin', verifyAdminJWT, proxy(process.env.ADMIN_SERVICE_URL));
-// router.use('/payments', verifyToken, proxy('/payments', process.env.PAYMENT_SERVICE_URL));
+router.use('/user', verifyJWT, proxy(process.env.USER_SERVICE_URL));
 
 module.exports = router;

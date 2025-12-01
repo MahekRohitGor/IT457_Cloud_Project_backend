@@ -13,6 +13,7 @@ router.put("/update-category", decryptMiddleware, encryptedMiddleware(adminContr
 
 router.post("/add-item", decryptMiddleware, encryptedMiddleware(adminController.createItem));
 router.get("/list-item", decryptMiddleware, encryptedMiddleware(adminController.listItems));
+router.get("/list-item/:id", decryptMiddleware, encryptedMiddleware(adminController.listItemsbyId));
 router.delete("/delete-item", decryptMiddleware, encryptedMiddleware(adminController.deleteItem));
 router.put("/update-item", decryptMiddleware, encryptedMiddleware(adminController.updateItem));
 

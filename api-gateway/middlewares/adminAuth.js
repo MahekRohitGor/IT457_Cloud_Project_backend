@@ -2,10 +2,15 @@ const jwt = require("jsonwebtoken");
 
 function verifyAdminJWT(req, res, next) {
     const openPaths = [
-        "/login"
+        "/login",
+        "/list-item"
     ];
 
-    if (openPaths.includes(req.path.toLowerCase())) {
+    const isPathOpen = openPaths.some(prefix => 
+        req.path.toLowerCase().startsWith(prefix.toLowerCase())
+    );
+
+    if (isPathOpen) {
         return next();
     } else {
         const authHeader = req.headers["authorization"];
@@ -15,7 +20,7 @@ function verifyAdminJWT(req, res, next) {
             const token = authHeader.split(" ")[1];
             console.log(token);
             try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const decoded = jwt.verify(token, process.env.JWT_SECRETA);
                 console.log("Decoded JWT:", decoded);
 
                 if (!decoded.role || !["ADMIN", "SUPER_ADMIN"].includes(decoded.role)) {

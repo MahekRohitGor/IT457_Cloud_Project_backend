@@ -25,6 +25,7 @@ function verifyJWT(req, res, next) {
                 req.headers["x-user-id"] = decoded.user_id;
                 next();
             } catch (err) {
+                console.log(err);
                 return res.status(401).json({ message: "Invalid token" });
             }
         }

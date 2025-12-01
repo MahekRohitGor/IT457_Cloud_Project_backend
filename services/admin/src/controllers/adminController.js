@@ -516,6 +516,57 @@ async function deleteItem(req, res, decryptedBody) {
     }
 }
 
+async function listItemsbyId(req, res, decryptedBody) {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return {
+                code: 400,
+                message: "Item ID is required",
+                data: null
+            };
+        } else{
+            const item = await Item.findOne({
+                where: { item_id: id, is_deleted: false },
+                include: [{
+                    model: Category,
+                    attributes: ["category_id", "category_name"]
+                }]
+            });
+            if (!item) {
+                return {
+                    code: 404,
+                    message: "Item not found",
+                    data: null
+                };
+            }
+            const plain = item.get({ plain: true });
+            const cleanData = {
+                item_id: plain.item_id,
+                item_name: plain.item_name,
+                description: plain.description,
+                price: plain.price,
+                category_id: plain.tbl_category ? plain.category_id : null,
+                category_name: plain.tbl_category ? plain.tbl_category.category_name : null,
+                image_link: plain.image_link,
+                is_available: plain.is_available
+            };
+            return {
+                code: 200,
+                message: "Item fetched successfully",
+                data: cleanData
+            };
+        }
+    } catch(error) {
+        console.error("Get Item by ID Error:", error);
+        return { 
+            code: 500, 
+            message: "Internal Server Error", 
+            data: null 
+        };
+    }
+}
+
 module.exports = {
     loginAdmin,
     logoutAdmin,
@@ -526,5 +577,6 @@ module.exports = {
     createItem,
     listItems,
     updateItem,
-    deleteItem
+    deleteItem,
+    listItemsbyId
 }
