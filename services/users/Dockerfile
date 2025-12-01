@@ -1,45 +1,28 @@
 # syntax=docker/dockerfile:1
 
-############################
-# Builder (optional caching)
-############################
 FROM node:20-alpine AS deps
 WORKDIR /app
-
-# Install build deps only if needed (keeps final image small)
 RUN apk add --no-cache python3 make g++ bash
 
-# Copy package files and install prod deps only
 COPY package*.json ./
 RUN npm ci --only=production
 
-#########################
-# App image
-#########################
 FROM node:20-alpine
 WORKDIR /app
-
-# create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# copy production node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-
-# copy app source
 COPY . .
 
-# set env
 ENV NODE_ENV=production
-ENV PORT=5001
+ENV PORT=5003
 
-# set permission
 RUN chown -R appuser:appgroup /app
 USER appuser
 
-EXPOSE 5001
+EXPOSE 5003
 
 HEALTHCHECK --interval=15s --timeout=3s --retries=3 \
-  CMD wget -qO- http://localhost:5001/health || exit 1
+  CMD wget -qO- http://localhost:5003/health || exit 1
 
-# start the app
 CMD ["node", "server.js"]
